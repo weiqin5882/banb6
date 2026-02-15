@@ -1,0 +1,127 @@
+:root {
+  --blue: #2f75b5;
+  --border: #d2d8e0;
+  --loss: #b42318;
+  --warn-bg: #fff7da;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f9;
+  font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+  color: #1f2937;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+h1 { margin: 0 0 16px; }
+h2 { margin-top: 0; }
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.hidden { display: none; }
+
+.row {
+  display: grid;
+  gap: 12px;
+}
+
+.two-col {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+input[type="file"], input[type="number"], select {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 9px 14px;
+  color: #fff;
+  background: var(--blue);
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:hover { filter: brightness(0.95); }
+
+.hint { color: #6b7280; }
+
+.mapping-item {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.summary {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfd8ff;
+  border-radius: 8px;
+  line-height: 1.8;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.table-wrap {
+  overflow: auto;
+  max-height: 70vh;
+  border: 1px solid var(--border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+th {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+}
+
+tr.loss-row td {
+  color: var(--loss);
+  font-weight: 700;
+}
+
+tr.warn-row td {
+  background: var(--warn-bg);
+}

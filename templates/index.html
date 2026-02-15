@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>快手小店订单比对与利润统计系统</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>快手小店订单比对与利润统计系统</h1>
+
+    <section class="card">
+      <h2>1. 上传源文件</h2>
+      <div class="row two-col">
+        <label>官方订单表（.xlsx/.xls）
+          <input id="officialFile" type="file" accept=".xlsx,.xls,.et" />
+        </label>
+        <label>客服统计表（.xlsx/.xls）
+          <input id="serviceFile" type="file" accept=".xlsx,.xls,.et" />
+        </label>
+      </div>
+      <button id="inspectBtn">读取文件并加载映射</button>
+      <p id="fileHint" class="hint"></p>
+    </section>
+
+    <section id="mappingCard" class="card hidden">
+      <h2>2. 列映射配置（列名不一致可手动指定）</h2>
+      <div class="row two-col">
+        <div>
+          <h3>官方订单映射</h3>
+          <div id="officialMapping"></div>
+        </div>
+        <div>
+          <h3>客服订单映射</h3>
+          <div id="serviceMapping"></div>
+        </div>
+      </div>
+      <div class="row">
+        <label>默认成本（可选，成本为空时使用）
+          <input id="defaultCost" type="number" step="0.01" value="0" />
+        </label>
+      </div>
+      <button id="compareBtn">开始对比</button>
+      <p class="hint">仅统计官方订单状态为「交易成功 / 已发货」的数据。</p>
+    </section>
+
+    <section id="resultCard" class="card hidden">
+      <h2>3. 对账结果预览</h2>
+      <div id="summary" class="summary"></div>
+
+      <div class="toolbar">
+        <div>
+          <button id="prevBtn">上一页</button>
+          <button id="nextBtn">下一页</button>
+          <span id="pageInfo"></span>
+        </div>
+        <button id="exportBtn">导出 Excel</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="resultTable">
+          <thead>
+            <tr>
+              <th>类序号</th>
+              <th>订单号</th>
+              <th>商品名称</th>
+              <th>销售额</th>
+              <th>成本</th>
+              <th>利润</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
