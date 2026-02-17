@@ -64,7 +64,7 @@ def standardize(
     default_cost: float,
     filter_status: bool,
 ) -> Tuple[pd.DataFrame, dict]:
-    required = ["order_no", "product_name", "sales_amount"]
+    required = ["order_no", "product_name", "sales_amount", "cost_amount"]
     missing_required = [k for k in required if not mapping.get(k)]
     if missing_required:
         raise ValueError(f"{source_name} 映射缺失字段：{', '.join(missing_required)}")
@@ -77,11 +77,7 @@ def standardize(
     work["order_no"] = df[mapping["order_no"]].map(normalize_order_no)
     work["product_name"] = df[mapping["product_name"]].astype(str).str.strip()
     work["sales_amount"] = df[mapping["sales_amount"]].map(lambda x: to_number(x, 0))
-    cost_col = mapping.get("cost_amount")
-    if cost_col:
-        work["cost_amount"] = df[cost_col].map(lambda x: to_number(x, default_cost))
-    else:
-        work["cost_amount"] = float(default_cost)
+    work["cost_amount"] = df[mapping["cost_amount"]].map(lambda x: to_number(x, default_cost))
 
     status_col = mapping.get("status")
     if status_col:
@@ -141,7 +137,7 @@ def compare_orders(official: pd.DataFrame, service: pd.DataFrame) -> pd.DataFram
                 "销售额": round(float(sales), 2),
                 "成本": round(float(cost), 2),
                 "利润": profit,
-                "交易状态": "匹配",
+                "状态": "匹配",
             }
         )
 
@@ -155,7 +151,7 @@ def compare_orders(official: pd.DataFrame, service: pd.DataFrame) -> pd.DataFram
                 "销售额": round(float(o["sales_amount"]), 2),
                 "成本": round(float(o["cost_amount"]), 2),
                 "利润": profit,
-                "交易状态": "客服漏记",
+                "状态": "客服漏记",
             }
         )
 
@@ -169,16 +165,16 @@ def compare_orders(official: pd.DataFrame, service: pd.DataFrame) -> pd.DataFram
                 "销售额": round(float(s["sales_amount"]), 2),
                 "成本": round(float(s["cost_amount"]), 2),
                 "利润": profit,
-                "交易状态": "异常订单",
+                "状态": "异常订单",
             }
         )
 
     result = pd.DataFrame(rows)
     if result.empty:
-        return pd.DataFrame(columns=["类序号", "订单号", "商品名称", "销售额", "成本", "利润", "交易状态"])
+        return pd.DataFrame(columns=["类序号", "订单号", "商品名称", "销售额", "成本", "利润", "状态"])
 
     status_order = {"匹配": 0, "客服漏记": 1, "异常订单": 2}
-    result["_rank"] = result["交易状态"].map(status_order)
+    result["_rank"] = result["状态"].map(status_order)
     result = result.sort_values(by=["_rank", "订单号"]).drop(columns=["_rank"]).reset_index(drop=True)
     result.insert(0, "类序号", range(1, len(result) + 1))
     return result
@@ -189,8 +185,8 @@ def build_summary(result_df: pd.DataFrame, official_stats: dict, service_stats: 
     total_cost = float(result_df["成本"].sum()) if not result_df.empty else 0.0
     total_profit = float(result_df["利润"].sum()) if not result_df.empty else 0.0
 
-    missing_count = int((result_df["交易状态"] == "客服漏记").sum()) if not result_df.empty else 0
-    abnormal_count = int((result_df["交易状态"] == "异常订单").sum()) if not result_df.empty else 0
+    missing_count = int((result_df["状态"] == "客服漏记").sum()) if not result_df.empty else 0
+    abnormal_count = int((result_df["状态"] == "异常订单").sum()) if not result_df.empty else 0
     loss_count = int((result_df["利润"] < 0).sum()) if not result_df.empty else 0
 
     return {
@@ -225,7 +221,7 @@ def export_excel_bytes(result_df: pd.DataFrame, summary: dict) -> io.BytesIO:
 
     headers = {cell.value: idx + 1 for idx, cell in enumerate(ws[1])}
     col_profit = headers.get("利润")
-    col_status = headers.get("交易状态")
+    col_status = headers.get("状态")
 
     for row_idx in range(2, ws.max_row + 1):
         if col_profit:
@@ -317,7 +313,7 @@ def compare_api():
         default_cost = to_number(request.form.get("default_cost", "0"), 0.0)
 
         if not official_mapping["status"]:
-            return jsonify({"ok": False, "message": "官方订单必须映射“交易状态”字段。"}), 400
+            return jsonify({"ok": False, "message": "官方订单必须映射“订单状态”字段。"}), 400
 
         official_df = read_uploaded_excel(official_file)
         service_df = read_uploaded_excel(service_file)
