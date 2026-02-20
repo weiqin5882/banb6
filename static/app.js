@@ -1,14 +1,14 @@
 const FIELDS = [
   { key: "order_no", label: "订单号", required: true },
-  { key: "status", label: "交易状态", required: false },
+  { key: "status", label: "订单状态", required: false },
   { key: "product_name", label: "商品名称", required: true },
   { key: "sales_amount", label: "销售额", required: true },
-  { key: "cost_amount", label: "成本", required: false },
+  { key: "cost_amount", label: "成本", required: true },
 ];
 
 const HINTS = {
   order_no: ["订单号", "订单编号", "单号", "快手订单编号"],
-  status: ["交易状态", "订单状态", "状态", "发货状态"],
+  status: ["订单状态", "状态", "交易状态", "发货状态"],
   product_name: ["商品名称", "产品名称", "标题"],
   sales_amount: ["销售额", "订单金额", "成交金额", "支付金额", "实付"],
   cost_amount: ["成本", "采购价", "成本价", "成本金额"],
@@ -197,12 +197,14 @@ function buildMappingForm() {
 
   const requiredChecks = [
     ["official_order_no", "官方订单号"],
-    ["official_status", "官方交易状态"],
+    ["official_status", "官方订单状态"],
     ["official_product_name", "官方商品名称"],
     ["official_sales_amount", "官方销售额"],
+    ["official_cost_amount", "官方成本"],
     ["service_order_no", "客服订单号"],
     ["service_product_name", "客服商品名称"],
     ["service_sales_amount", "客服销售额"],
+    ["service_cost_amount", "客服成本"],
   ];
 
   for (const [key, label] of requiredChecks) {
@@ -241,7 +243,7 @@ function renderRows(records) {
   records.forEach((row) => {
     const tr = document.createElement("tr");
     if (row["利润"] < 0) tr.classList.add("loss-row");
-    if (row["比对结果"] === "客服漏记" || row["比对结果"] === "异常订单") tr.classList.add("warn-row");
+    if (row["状态"] === "客服漏记" || row["状态"] === "异常订单") tr.classList.add("warn-row");
 
     tr.innerHTML = `
       <td>${row["类序号"] ?? ""}</td>
@@ -251,7 +253,6 @@ function renderRows(records) {
       <td>${toFixed2(row["成本"])}</td>
       <td>${toFixed2(row["利润"])}</td>
       <td>${row["状态"] ?? ""}</td>
-      <td>${row["比对结果"] ?? ""}</td>
     `;
     resultTableBody.appendChild(tr);
   });
