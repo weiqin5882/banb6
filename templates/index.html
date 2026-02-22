@@ -9,7 +9,6 @@
 <body>
   <main class="container">
     <h1>快手小店订单比对与利润统计系统</h1>
-    <p class="hint">请先启动后端：<code>python app.py</code>，再通过 <code>http://127.0.0.1:8000</code> 访问。</p>
 
     <section class="card">
       <h2>1. 上传源文件</h2>
@@ -43,7 +42,7 @@
         </label>
       </div>
       <button id="compareBtn">开始对比</button>
-      <p class="hint">仅统计官方订单交易状态为「交易成功 / 已发货 / 已收货」的数据；其中汇总金额仅统计官方表中「交易成功 / 已收货」。若官方无成本列，可留空并使用“默认成本”。</p>
+      <p class="hint">仅统计官方订单状态为「交易成功 / 已发货」的数据。</p>
     </section>
 
     <section id="resultCard" class="card hidden">
@@ -70,7 +69,6 @@
               <th>成本</th>
               <th>利润</th>
               <th>状态</th>
-              <th>比对结果</th>
             </tr>
           </thead>
           <tbody></tbody>

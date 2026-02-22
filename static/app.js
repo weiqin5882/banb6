@@ -1,14 +1,14 @@
 const FIELDS = [
   { key: "order_no", label: "订单号", required: true },
-  { key: "status", label: "交易状态", required: false },
+  { key: "status", label: "订单状态", required: false },
   { key: "product_name", label: "商品名称", required: true },
   { key: "sales_amount", label: "销售额", required: true },
-  { key: "cost_amount", label: "成本", required: false },
+  { key: "cost_amount", label: "成本", required: true },
 ];
 
 const HINTS = {
   order_no: ["订单号", "订单编号", "单号", "快手订单编号"],
-  status: ["交易状态", "订单状态", "状态", "发货状态"],
+  status: ["订单状态", "状态", "交易状态", "发货状态"],
   product_name: ["商品名称", "产品名称", "标题"],
   sales_amount: ["销售额", "订单金额", "成交金额", "支付金额", "实付"],
   cost_amount: ["成本", "采购价", "成本价", "成本金额"],
@@ -31,38 +31,12 @@ const nextBtn = document.getElementById("nextBtn");
 const exportBtn = document.getElementById("exportBtn");
 const defaultCostInput = document.getElementById("defaultCost");
 
-function getApiBase() {
-  const saved = window.localStorage.getItem("apiBase") || "";
-  if (saved) return saved.replace(/\/$/, "");
-  if (window.location.protocol === "file:") {
-    return "http://127.0.0.1:8000";
-  }
-  return "";
-}
-
-function apiUrl(path) {
-  const base = getApiBase();
-  return `${base}${path}`;
-}
-
-function networkErrorMessage(err) {
-  const raw = String(err?.message || err || "");
-  if (raw.includes("Failed to fetch") || raw.includes("NetworkError")) {
-    return "无法连接后端接口。请先启动服务：python app.py（默认 http://127.0.0.1:8000），再刷新页面重试。";
-  }
-  return raw || "请求失败";
-}
-
 let officialColumns = [];
 let serviceColumns = [];
 let reportId = "";
 let currentPage = 1;
 let totalPages = 1;
 const pageSize = 50;
-
-if (window.location.protocol === "file:") {
-  fileHint.textContent = "当前为本地文件模式，系统将默认连接 http://127.0.0.1:8000。请先运行 python app.py。";
-}
 
 inspectBtn.addEventListener("click", async () => {
   if (!officialFile.files[0] || !serviceFile.files[0]) {
@@ -85,7 +59,7 @@ inspectBtn.addEventListener("click", async () => {
     mappingCard.classList.remove("hidden");
     fileHint.textContent = `文件读取完成：官方 ${officialRes.rows} 行，客服 ${serviceRes.rows} 行。`;
   } catch (err) {
-    fileHint.textContent = networkErrorMessage(err);
+    fileHint.textContent = err.message;
   }
 });
 
@@ -109,7 +83,7 @@ compareBtn.addEventListener("click", async () => {
     Object.entries(mappingForm.mapping).forEach(([k, v]) => formData.append(k, v));
     formData.append("default_cost", defaultCostInput.value || "0");
 
-    const resp = await fetch(apiUrl("/api/compare"), { method: "POST", body: formData });
+    const resp = await fetch("/api/compare", { method: "POST", body: formData });
     const data = await resp.json();
     if (!data.ok) {
       throw new Error(data.message || "处理失败");
@@ -121,7 +95,7 @@ compareBtn.addEventListener("click", async () => {
     await loadPage();
     resultCard.classList.remove("hidden");
   } catch (err) {
-    alert(networkErrorMessage(err));
+    alert(err.message);
   }
 });
 
@@ -144,14 +118,14 @@ exportBtn.addEventListener("click", () => {
     alert("请先进行对比。")
     return;
   }
-  window.open(apiUrl(`/api/export/${reportId}`), "_blank");
+  window.open(`/api/export/${reportId}`, "_blank");
 });
 
 async function inspectSingleFile(file) {
   const fd = new FormData();
   fd.append("file", file);
 
-  const resp = await fetch(apiUrl("/api/inspect"), { method: "POST", body: fd });
+  const resp = await fetch("/api/inspect", { method: "POST", body: fd });
   const data = await resp.json();
   if (!data.ok) {
     throw new Error(data.message || "文件读取失败");
@@ -223,12 +197,14 @@ function buildMappingForm() {
 
   const requiredChecks = [
     ["official_order_no", "官方订单号"],
-    ["official_status", "官方交易状态"],
+    ["official_status", "官方订单状态"],
     ["official_product_name", "官方商品名称"],
     ["official_sales_amount", "官方销售额"],
+    ["official_cost_amount", "官方成本"],
     ["service_order_no", "客服订单号"],
     ["service_product_name", "客服商品名称"],
     ["service_sales_amount", "客服销售额"],
+    ["service_cost_amount", "客服成本"],
   ];
 
   for (const [key, label] of requiredChecks) {
@@ -248,7 +224,7 @@ function getVal(id) {
 async function loadPage() {
   if (!reportId) return;
 
-  const resp = await fetch(apiUrl(`/api/report/${reportId}?page=${currentPage}&page_size=${pageSize}`));
+  const resp = await fetch(`/api/report/${reportId}?page=${currentPage}&page_size=${pageSize}`);
   const data = await resp.json();
   if (!data.ok) {
     alert(data.message || "分页读取失败");
@@ -267,7 +243,7 @@ function renderRows(records) {
   records.forEach((row) => {
     const tr = document.createElement("tr");
     if (row["利润"] < 0) tr.classList.add("loss-row");
-    if (row["比对结果"] === "客服漏记" || row["比对结果"] === "异常订单") tr.classList.add("warn-row");
+    if (row["状态"] === "客服漏记" || row["状态"] === "异常订单") tr.classList.add("warn-row");
 
     tr.innerHTML = `
       <td>${row["类序号"] ?? ""}</td>
@@ -277,7 +253,6 @@ function renderRows(records) {
       <td>${toFixed2(row["成本"])}</td>
       <td>${toFixed2(row["利润"])}</td>
       <td>${row["状态"] ?? ""}</td>
-      <td>${row["比对结果"] ?? ""}</td>
     `;
     resultTableBody.appendChild(tr);
   });
@@ -287,7 +262,7 @@ function renderSummary(s) {
   summary.innerHTML = `
     <strong>汇总统计：</strong>
     总销售额 ${toFixed2(s.total_sales)} ｜ 总成本 ${toFixed2(s.total_cost)} ｜ 总利润 ${toFixed2(s.total_profit)} ｜
-    订单总数 ${s.order_count} ｜ 匹配成功 ${s.matched_count} ｜ 官方汇总条数(交易成功/已收货) ${s.summary_count} ｜ 客服漏记 ${s.missing_count} ｜ 异常订单 ${s.abnormal_count} ｜ 汇总亏损订单 ${s.loss_count}
+    订单总数 ${s.order_count} ｜ 客服漏记 ${s.missing_count} ｜ 异常订单 ${s.abnormal_count} ｜ 亏损订单 ${s.loss_count}
     <br/>
     数据清洗：官方去空订单号 ${s.official_stats.empty_order_removed}，官方重复 ${s.official_stats.duplicate_rows}，官方状态过滤 ${s.official_stats.status_filtered_rows}；
     客服去空订单号 ${s.service_stats.empty_order_removed}，客服重复 ${s.service_stats.duplicate_rows}。
